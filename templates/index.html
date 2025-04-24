@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LinguaVoice | Standalone Translator</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #4361ee;
+            --primary-dark: #3a56d4;
+            --secondary: #3f37c9;
+            --light: #f8f9fa;
+            --dark: #212529;
+            --gray: #6c757d;
+            --light-gray: #e9ecef;
+            --success: #4cc9f0;
+            --warning: #f72585;
+            --border-radius: 8px;
+            --box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            --transition: all 0.3s ease;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: var(--dark);
+            background-color: #f5f7ff;
+            min-height: 100vh;
+            padding: 2rem;
+        }
+
+        body[dir="rtl"] {
+            direction: rtl;
+            text-align: right;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            overflow: hidden;
+        }
+
+        header {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            padding: 2rem;
+            text-align: center;
+        }
+
+        header h1 {
+            font-size: 2.2rem;
+            margin-bottom: 0.5rem;
+            font-weight: 700;
+        }
+
+        header p {
+            opacity: 0.9;
+            font-size: 1.1rem;
+        }
+
+        .app-icon {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            color: white;
+        }
+
+        .main-content {
+            padding: 2rem;
+        }
+
+        .card {
+            background: white;
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        select, textarea {
+            width: 100%;
+            padding: 0.8rem 1rem;
+            border: 1px solid var(--light-gray);
+            border-radius: var(--border-radius);
+            font-size: 1rem;
+            transition: var(--transition);
+            background-color: white;
+        }
+
+        textarea[dir="rtl"] {
+            text-align: right;
+        }
+
+        select:focus, textarea:focus {
+            border-color: var(--primary);
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.2);
+        }
+
+        textarea {
+            min-height: 150px;
+            resize: vertical;
+            line-height: 1.6;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background-color: var(--primary);
+            color: white;
+            padding: 0.8rem 1.5rem;
+            border: none;
+            border-radius: var(--border-radius);
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            width: 100%;
+        }
+
+        .btn:hover {
+            background-color: var(--primary-dark);
+            transform: translateY(-2px);
+        }
+
+        .btn:disabled {
+            background-color: var(--gray);
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn i {
+            margin-right: 0.5rem;
+        }
+
+        .btn-secondary {
+            background-color: white;
+            color: var(--primary);
+            border: 1px solid var(--primary);
+            margin-top: 0.5rem;
+        }
+
+        .btn-secondary:hover {
+            background-color: var(--light);
+        }
+
+        .result-card {
+            display: none;
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .section-title {
+            font-size: 1.2rem;
+            margin-bottom: 1rem;
+            color: var(--primary);
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+        }
+
+        .section-title i {
+            margin-right: 0.5rem;
+        }
+
+        .translation-text {
+            font-size: 1.2rem;
+            line-height: 1.7;
+            padding: 1rem;
+            background-color: var(--light);
+            border-radius: var(--border-radius);
+            margin-bottom: 1.5rem;
+        }
+
+        .original-text {
+            font-size: 1.1rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .pronunciation {
+            color: var(--gray);
+            font-style: italic;
+            margin: 0.5rem 0;
+            padding: 0.5rem;
+            background-color: var(--light);
+            border-radius: var(--border-radius);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .pronunciation-text {
+            flex: 1;
+        }
+
+        .furigana-container {
+            line-height: 2.5;
+            margin: 1rem 0;
+            word-spacing: 0.5em;
+        }
+
+        ruby {
+            ruby-position: under;
+            margin-right: 0.3em;
+        }
+
+        rt {
+            font-size: 0.6em;
+            color: var(--primary);
+            opacity: 0.8;
+        }
+
+        .service-info {
+            font-size: 0.85rem;
+            color: var(--gray);
+            margin-top: 1.5rem;
+            text-align: right;
+            padding-top: 1rem;
+            border-top: 1px solid var(--light-gray);
+        }
+
+        body[dir="rtl"] .service-info {
+            text-align: left;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 1.5rem;
+            color: var(--primary);
+        }
+
+        .spinner {
+            animation: spin 1s linear infinite;
+            display: inline-block;
+            margin-left: 0.5rem;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error {
+            display: none;
+            color: var(--warning);
+            background-color: rgba(247, 37, 133, 0.1);
+            padding: 1rem;
+            border-radius: var(--border-radius);
+            margin: 1rem 0;
+            border-left: 4px solid var(--warning);
+        }
+
+        .language-selector {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .language-selector select {
+            flex: 1;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .action-buttons .btn {
+            flex: 1;
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 1rem;
+            }
+
+            header {
+                padding: 1.5rem;
+            }
+
+            .main-content {
+                padding: 1.5rem;
+            }
+
+            .action-buttons {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="app-icon">
+                <i class="fas fa-language"></i>
+            </div>
+            <h1>LinguaVoice Translator</h1>
+            <p>Standalone translation service</p>
+        </header>
+
+        <div class="main-content">
+            <div class="card">
+                <div class="form-group">
+                    <div class="language-selector">
+                        <label for="sourceLang">Source Language:</label>
+                        <select id="sourceLang">
+                            {% for code, lang in languages.items() %}
+                                <option value="{{ code }}" data-rtl="{{ lang.rtl }}">{{ lang.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="inputText">Text to Translate:</label>
+                    <textarea id="inputText" placeholder="Enter your text here..."></textarea>
+                </div>
+
+                <div class="action-buttons">
+                    <button id="translateBtn" class="btn">
+                        <i class="fas fa-exchange-alt"></i> Translate
+                    </button>
+                </div>
+            </div>
+
+            <div id="loading" class="loading">
+                <i class="fas fa-spinner spinner"></i> Processing your translation...
+            </div>
+
+            <div id="error" class="error"></div>
+
+            <div id="result" class="card result-card">
+                <h3 class="section-title">
+                    <i class="fas fa-check-circle"></i> Translation Result
+                </h3>
+                <div class="translation-text" id="translatedText"></div>
+
+                <div class="original-section">
+                    <h4 class="section-title">
+                        <i class="fas fa-font"></i> Original Text
+                    </h4>
+                    <div class="original-text" id="originalText"></div>
+                    <div class="pronunciation" id="pronunciation">
+                        <span class="pronunciation-text"></span>
+                    </div>
+                </div>
+
+                <div class="furigana-container" id="furiganaContainer"></div>
+                <div class="service-info" id="serviceInfo"></div>
+
+                <div class="action-buttons">
+                    <button id="copyBtn" class="btn btn-secondary">
+                        <i class="fas fa-copy"></i> Copy Translation
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const translateBtn = document.getElementById('translateBtn');
+            const inputText = document.getElementById('inputText');
+            const sourceLang = document.getElementById('sourceLang');
+            const resultDiv = document.getElementById('result');
+            const translatedText = document.getElementById('translatedText');
+            const originalText = document.getElementById('originalText');
+            const pronunciation = document.getElementById('pronunciation');
+            const pronunciationText = pronunciation.querySelector('.pronunciation-text');
+            const furiganaContainer = document.getElementById('furiganaContainer');
+            const serviceInfo = document.getElementById('serviceInfo');
+            const loadingDiv = document.getElementById('loading');
+            const errorDiv = document.getElementById('error');
+            const copyBtn = document.getElementById('copyBtn');
+
+            // Handle RTL language changes
+            sourceLang.addEventListener('change', function() {
+                const selectedOption = this.options[this.selectedIndex];
+                const isRTL = selectedOption.dataset.rtl === 'true';
+
+                document.body.dir = isRTL ? 'rtl' : 'ltr';
+                inputText.dir = isRTL ? 'rtl' : 'ltr';
+                inputText.style.textAlign = isRTL ? 'right' : 'left';
+            });
+
+            // Copy translation
+            copyBtn.addEventListener('click', function() {
+                const text = translatedText.textContent;
+
+                if (text) {
+                    navigator.clipboard.writeText(text);
+                    const originalText = copyBtn.innerHTML;
+                    copyBtn.innerHTML = '<i class="fas fa-check"></i> Copied!';
+
+                    setTimeout(() => {
+                        copyBtn.innerHTML = originalText;
+                    }, 2000);
+                }
+            });
+
+            // Translation function
+            translateBtn.addEventListener('click', async function() {
+                const text = inputText.value.trim();
+                const lang = sourceLang.value;
+
+                if (!text) {
+                    showError('Please enter text to translate');
+                    return;
+                }
+
+                // Reset UI
+                errorDiv.style.display = 'none';
+                resultDiv.style.display = 'none';
+                furiganaContainer.innerHTML = '';
+                loadingDiv.style.display = 'block';
+                translateBtn.disabled = true;
+
+                try {
+                    const response = await fetch('/translate', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            text: text,
+                            source_lang: lang
+                        })
+                    });
+
+                    const data = await response.json();
+
+                    if (!response.ok) {
+                        throw new Error(data.error || 'Translation failed');
+                    }
+
+                    displayResult(data);
+
+                    // If Japanese, get proper furigana
+                    if (data.has_furigana) {
+                        await displayFurigana(text);
+                    }
+                } catch (error) {
+                    showError(error.message);
+                    console.error('Error:', error);
+                } finally {
+                    loadingDiv.style.display = 'none';
+                    translateBtn.disabled = false;
+                }
+            });
+
+            async function displayFurigana(text) {
+                try {
+                    const response = await fetch('/furigana', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            text: text
+                        })
+                    });
+
+                    const data = await response.json();
+
+                    if (response.ok && data.furigana) {
+                        furiganaContainer.innerHTML = `
+                            <h4 class="section-title">
+                                <i class="fas fa-comment-alt"></i> Furigana
+                            </h4>`;
+
+                        data.furigana.forEach(item => {
+                            if (item.reading) {
+                                const ruby = document.createElement('ruby');
+                                ruby.textContent = item.text;
+                                const rt = document.createElement('rt');
+                                rt.textContent = item.reading;
+                                ruby.appendChild(rt);
+                                furiganaContainer.appendChild(ruby);
+                            } else {
+                                furiganaContainer.appendChild(document.createTextNode(item.text));
+                            }
+                        });
+                    }
+                } catch (error) {
+                    console.error('Error fetching furigana:', error);
+                    furiganaContainer.innerHTML = `
+                        <div class="error">
+                            <i class="fas fa-exclamation-circle"></i> Could not generate furigana
+                        </div>`;
+                }
+            }
+
+            function showError(message) {
+                errorDiv.innerHTML = `
+                    <i class="fas fa-exclamation-circle"></i> ${message}
+                `;
+                errorDiv.style.display = 'block';
+            }
+
+            function displayResult(data) {
+                // Display main translation
+                translatedText.textContent = data.translation;
+
+                // Display original text
+                originalText.textContent = data.original_text;
+
+                // Display pronunciation
+                let pronunciationContent = '';
+                if (data.pronunciation.romaji) {
+                    pronunciationContent = `Romaji: ${data.pronunciation.romaji}`;
+                } else if (data.pronunciation.pinyin) {
+                    pronunciationContent = `Pinyin: ${data.pronunciation.pinyin}`;
+                } else if (data.pronunciation.arabic) {
+                    pronunciationContent = `Arabic: ${data.pronunciation.arabic}`;
+                }
+                pronunciationText.textContent = pronunciationContent;
+
+                // Set RTL if needed
+                document.body.dir = data.is_rtl ? 'rtl' : 'ltr';
+
+                // Display service info
+                serviceInfo.innerHTML = `
+                    <i class="fas fa-info-circle"></i> Translated from ${data.source_lang} via ${data.service}
+                `;
+
+                // Show results with animation
+                resultDiv.style.display = 'block';
+            }
+        });
+    </script>
+</body>
+</html>
