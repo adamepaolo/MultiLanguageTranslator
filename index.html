@@ -250,17 +250,20 @@
             line-height: 2.5;
             margin: 1rem 0;
             word-spacing: 0.5em;
+            display: none;
         }
 
-        ruby {
-            ruby-position: under;
+        .furigana-container ruby {
+            ruby-position: over;
             margin-right: 0.3em;
         }
 
-        rt {
+        .furigana-container rt {
             font-size: 0.6em;
             color: var(--primary);
             opacity: 0.8;
+            text-align: center;
+            display: block;
         }
 
         .service-info {
@@ -617,7 +620,7 @@
                     
                     // Mock translation data
                     const mockData = {
-                        translation: "This is a simulated translation of: " + text,
+                        translation: `This is a mock translation of your ${sourceLang.options[sourceLang.selectedIndex].text} text: "${text}"`,
                         service: "Mock Translation Service",
                         source_lang: sourceLang.options[sourceLang.selectedIndex].text,
                         original_text: text,
@@ -653,29 +656,28 @@
             }
 
             function displayMockFurigana(text) {
-                // This is just a mock - in a real app you'd use MeCab or similar
-                const mockFurigana = [
-                    { text: text.substring(0, Math.ceil(text.length/2)), reading: "Reading" },
-                    { text: text.substring(Math.ceil(text.length/2)), reading: "Here" }
-                ];
-                
+                // Create a better mock furigana display
                 furiganaContainer.innerHTML = `
                     <h4 class="section-title">
                         <i class="fas fa-comment-alt"></i> Furigana
-                    </h4>`;
+                    </h4>
+                    <div style="font-size: 1.2rem; line-height: 2.5;">`;
                 
-                mockFurigana.forEach(item => {
-                    if (item.reading) {
+                // Split the text into words and add mock readings
+                const words = text.split(/\s+/);
+                words.forEach(word => {
+                    if (word.trim()) {
                         const ruby = document.createElement('ruby');
-                        ruby.textContent = item.text;
+                        ruby.textContent = word;
                         const rt = document.createElement('rt');
-                        rt.textContent = item.reading;
+                        rt.textContent = "reading"; // Mock reading
                         ruby.appendChild(rt);
                         furiganaContainer.appendChild(ruby);
-                    } else {
-                        furiganaContainer.appendChild(document.createTextNode(item.text));
+                        furiganaContainer.appendChild(document.createTextNode(' '));
                     }
                 });
+                
+                furiganaContainer.appendChild(document.createElement('div'));
                 furiganaContainer.style.display = 'block';
             }
 
@@ -688,19 +690,21 @@
 
             function displayResult(data) {
                 // Display main translation
-                translatedText.textContent = data.translation;
+                translatedText.textContent = data.translation || "No translation available";
                 
                 // Display original text
-                originalText.textContent = data.original_text;
+                originalText.textContent = data.original_text || inputText.value.trim();
                 
                 // Display pronunciation
                 let pronunciationContent = '';
-                if (data.pronunciation.romaji) {
+                if (data.pronunciation?.romaji) {
                     pronunciationContent = `Romaji: ${data.pronunciation.romaji}`;
-                } else if (data.pronunciation.pinyin) {
+                } else if (data.pronunciation?.pinyin) {
                     pronunciationContent = `Pinyin: ${data.pronunciation.pinyin}`;
-                } else if (data.pronunciation.arabic) {
+                } else if (data.pronunciation?.arabic) {
                     pronunciationContent = `Arabic: ${data.pronunciation.arabic}`;
+                } else {
+                    pronunciationContent = "Pronunciation not available";
                 }
                 pronunciationText.textContent = pronunciationContent;
                 
@@ -714,6 +718,7 @@
                 
                 // Show results with animation
                 resultDiv.style.display = 'block';
+                furiganaContainer.style.display = data.has_furigana ? 'block' : 'none';
             }
 
             // Service worker registration for offline capability
