@@ -6,7 +6,9 @@ import re
 import os
 import sys
 import pykakasi
+from PyInstaller.utils.hooks import collect_data_files
 
+datas = collect_data_files('pykakasi')
 app = Flask(__name__)
 CORS(app)
 
@@ -21,25 +23,38 @@ def initialize_kakasi():
         print("Attempting standalone mode workaround...")
 
         try:
-            # Get the directory where the executable is running from
-            if getattr(sys, 'frozen', False):
-                # Running in PyInstaller bundle
-                base_dir = sys._MEIPASS
-            else:
-                # Running in normal Python environment
-                base_dir = os.path.dirname(os.path.abspath(__file__))
+            # Try to find the data file in alternative locations
+            possible_paths = [
+                os.path.join(os.path.dirname(pykakasi.__file__), 'data', 'kanwadict4.db'),
+                os.path.join(sys._MEIPASS, 'pykakasi', 'data', 'kanwadict4.db') if getattr(sys, 'frozen', False) else None,
+                os.path.join(os.path.dirname(__file__), 'pykakasi', 'data', 'kanwadict4.db'),
+            ]
 
-            data_dir = os.path.join(base_dir, 'pykakasi', 'data')
+            for path in filter(None, possible_paths):
+                if os.path.exists(path):
+                    os.environ['KAKASI_DICT_PATH'] = path
+                    return pykakasi.kakasi()
 
-            # Create the directory if it doesn't exist
-            os.makedirs(data_dir, exist_ok=True)
+            # If no path found, try with a different dictionary file
+            for dict_file in ['kanwadict4.db', 'kanwadict3.db', 'lkanwadictu.db']:
+                try:
+                    from pykakasi import kanji
+                    kanji.JISYO = dict_file
+                    return pykakasi.kakasi()
+                except:
+                    continue
 
-            # Manually set the dictionary path
-            from pykakasi import kanji
-            kanji.JISYO = os.path.join(data_dir, 'lkanwadictu.db')
+            raise FileNotFoundError("Could not find any dictionary files")
 
-            # Try initialization again
-            return pykakasi.kakasi()
+        except Exception as e:
+            print(f"Fallback initialization failed: {e}")
+
+            class DummyConverter:
+                def convert(self, text):
+                    return [{'orig': text, 'hira': text, 'hepburn': text}]
+
+            print("Using dummy converter - furigana functionality will be limited")
+            return DummyConverter()
 
         except Exception as e:
             print(f"Fallback initialization failed: {e}")
